@@ -1,8 +1,9 @@
-package core;
+package core.data;
 
 import java.util.HashMap;
 import java.util.Map;
 
+import core.service.Store;
 import estorePojo.exceptions.UnknownItemException;
 
 public class Provider {
