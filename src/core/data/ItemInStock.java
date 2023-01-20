@@ -1,5 +1,7 @@
 package core.data;
 
+import core.service.Provider;
+
 public class ItemInStock {
 
 	/** The total number of ItemInStock instances created. */
