@@ -13,15 +13,15 @@ import estorePojo.exceptions.InvalidCartException;
 import estorePojo.exceptions.UnknownAccountException;
 import estorePojo.exceptions.UnknownItemException;
 
-public class Store {
+public class Store implements IGestionExt, IGestionInt, IClientele {
 
-	    private Provider provider;
-	    private Bank bank;
+	    private IProvider provider;
+	    private IBank bank;
 
 	    /**
 	     * Constructs a new StoreImpl
 	     */
-	    public Store(Provider prov, Bank bk) {
+	    public Store(IProvider prov, IBank bk) {
 	        provider = prov;
 	        bank = bk;
 	    }
@@ -31,7 +31,8 @@ public class Store {
 	     * @return      the price of a given item
 	     * @throws UnknownItemException
 	     */
-	    public double getPrice( Object item ) throws UnknownItemException {
+	    @Override
+		public double getPrice(Object item) throws UnknownItemException {
 	        return provider.getPrice(item);
 	    }
 	    
@@ -43,7 +44,8 @@ public class Store {
 	     *      directly from the store
 	     *      i.e. without having to re-order it from the provider
 	     */
-	    public boolean isAvailable( Object item, int qty )
+	    @Override
+		public boolean isAvailable(Object item, int qty)
 	    throws UnknownItemException {
 	        
 	        if ( ! itemsInStock.containsKey(item) )
@@ -71,14 +73,15 @@ public class Store {
 	     *      Either a new cart at each call or the same cart updated.
 	     * 
 	     * @throws UnknownItemException
-	     * @throws MismatchClientCartException
+	     * @throws InvalidCartException
 	     *      if the given client does not own the given cart
 	     */
-	    public Cart addItemToCart(
-	            Cart cart,
-	            Client client,
-	            Object item,
-	            int qty )
+	    @Override
+		public Cart addItemToCart(
+				Cart cart,
+				Client client,
+				Object item,
+				int qty)
 	    throws UnknownItemException, InvalidCartException {
 	        
 	        if ( cart == null ) {
@@ -107,7 +110,8 @@ public class Store {
 	     * 
 	     * @throws UnknownItemException
 	     */
-	    public Order pay(Cart cart, String address, String bankAccountRef )
+	    @Override
+		public Order pay(Cart cart, String address, String bankAccountRef)
 	    throws
 	    InvalidCartException, UnknownItemException,
 	    InsufficientBalanceException, UnknownAccountException {
@@ -169,13 +173,14 @@ public class Store {
 	     * @throws InsufficientBalanceException
 	     * @throws UnknownAccountException
 	     */
-	    public Order oneShotOrder(
-	            Client client,
-	            Object item,
-	            int qty,
-	            String address,
-	            String bankAccountRef
-	    )
+	    @Override
+		public Order oneShotOrder(
+				Client client,
+				Object item,
+				int qty,
+				String address,
+				String bankAccountRef
+		)
 	    throws
 	    UnknownItemException,
 	    InsufficientBalanceException, UnknownAccountException {
@@ -195,67 +200,52 @@ public class Store {
 	        
 	        return order;
 	    }
-	    
-	    /**
-	     * Treat an item ordered by a client and update the corresponding order.
-	     * 
-	     * @param order 
-	     * @param item
-	     * @param qty
-	     * @return
-	     * 
-	     * @throws UnknownItemException
-	     * @throws InsufficientBalanceException
-	     * @throws UnknownAccountException
-	     */
-	    private void treatOrder( Order order, Object item, int qty )
-	    throws UnknownItemException {
-	        
-	        // The number of additional item to order
-	        // in case we need to place an order to the provider
-	        final int more = 10;
-	        
-	        // The price of the ordered item
-	        // Throws UnknownItemException if the item does not exist
-	        final double price = provider.getPrice(item);
-	        
-	        final double totalAmount = price*qty;
-	        
-	        // The delay (in hours) for delivering the order
-	        // By default, it takes 2 hours to ship items from the stock
-	        // This delay increases if an order is to be placed to the provider
-	        int delay = 2;
-	        
-	        // Check whether the item is available in the stock
-	        // If not, place an order for it to the provider
-	        ItemInStock iis = (ItemInStock) itemsInStock.get(item);
-	        if ( iis == null ) {
-	            int quantity = qty + more;
-	            delay += provider.order(this,item,quantity);
-	            ItemInStock newItem = new ItemInStock(item,more,price,provider);
-	            itemsInStock.put(item,newItem);
-	        }
-	        else {
-	            // The item is in the stock
-	            // Check whether there is a sufficient number of them
-	            // to match the order
-	            if ( iis.getQuantity() >= qty ) {
-	                iis.changeQuantity(qty);
-	            }
-	            else {
-	                // An order to the provider needs to be issued
-	                int quantity = qty + more;
-	                delay += provider.order(this,item,quantity);
-	                iis.changeQuantity(more);
-	            }
-	        }
-	        
-	        // Update the order
-	        order.addItem(item,qty,price);
-	        order.setDelay(delay);
-	    }
+		public void treatOrder(Order order, Object item, int qty)
+			throws UnknownItemException {
 
-	    // -----------------------------------------------------
+		// The number of additional item to order
+		// in case we need to place an order to the provider
+		final int more = 10;
+
+		// The price of the ordered item
+		// Throws UnknownItemException if the item does not exist
+		final double price = provider.getPrice(item);
+
+		final double totalAmount = price * qty;
+
+		// The delay (in hours) for delivering the order
+		// By default, it takes 2 hours to ship items from the stock
+		// This delay increases if an order is to be placed to the provider
+		int delay = 2;
+
+		// Check whether the item is available in the stock
+		// If not, place an order for it to the provider
+		ItemInStock iis = (ItemInStock) itemsInStock.get(item);
+		if (iis == null) {
+			int quantity = qty + more;
+			delay += provider.order(this, item, quantity);
+			ItemInStock newItem = new ItemInStock(item, more, price, provider);
+			itemsInStock.put(item, newItem);
+		} else {
+			// The item is in the stock
+			// Check whether there is a sufficient number of them
+			// to match the order
+			if (iis.getQuantity() >= qty) {
+				iis.changeQuantity(qty);
+			} else {
+				// An order to the provider needs to be issued
+				int quantity = qty + more;
+				delay += provider.order(this, item, quantity);
+				iis.changeQuantity(more);
+			}
+		}
+
+		// Update the order
+		order.addItem(item, qty, price);
+		order.setDelay(delay);
+	}
+
+	// -----------------------------------------------------
 	    // Other methods
 	    // -----------------------------------------------------
 	    

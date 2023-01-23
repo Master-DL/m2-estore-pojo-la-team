@@ -2,7 +2,6 @@ package core.service;
 
 import core.data.Cart;
 import core.data.Order;
-import core.service.Store;
 import estorePojo.exceptions.InsufficientBalanceException;
 import estorePojo.exceptions.InvalidCartException;
 import estorePojo.exceptions.UnknownAccountException;
@@ -10,9 +9,9 @@ import estorePojo.exceptions.UnknownItemException;
 
 public class Client implements Runnable {
 
-    private Store store;
+    private IClientele store;
 
-    public Client (Store s){
+    public Client (IClientele s){
     	store = s;
     }
     // -----------------------------------------------------
